@@ -6,11 +6,27 @@ import java.util.regex.Pattern;
 
 /**
  * Класс для разбора и вычисления арифметических выражений с поддержкой переменных и функций.
+ * Поддерживает стандартные операторы (+, -, *, /, ^), скобки, переменные и функции (sin, cos, tan, sqrt, log).
  */
 public class ExpressionEvaluator {
-    private final Map<String, Double> variables = new HashMap<>();
+    private Map<String, Double> variables;
     private final Set<String> supportedFunctions = Set.of("sin", "cos", "tan", "sqrt", "log");
     private final Scanner scanner = new Scanner(System.in);
+
+    /**
+     * Конструктор, инициализирующий переменные заданной Map.
+     * @param variables отображение переменных и их значений
+     */
+    public ExpressionEvaluator(Map<String, Double> variables) {
+        this.variables = variables;
+    }
+
+    /**
+     * Конструктор по умолчанию, создающий пустое множество переменных.
+     */
+    public ExpressionEvaluator() {
+        this.variables = new HashMap<>();
+    }
 
     /**
      * Основной метод вычисления значения выражения.
@@ -28,6 +44,11 @@ public class ExpressionEvaluator {
         return evaluateRPN(rpn);
     }
 
+    /**
+     * Разбивает выражение на токены: числа, операторы, переменные и функции.
+     * @param expr строка выражения
+     * @return список токенов
+     */
     private List<String> tokenize(String expr) {
         List<String> tokens = new ArrayList<>();
         Pattern pattern = Pattern.compile(
@@ -42,6 +63,11 @@ public class ExpressionEvaluator {
         return tokens;
     }
 
+    /**
+     * Извлекает имена переменных из списка токенов.
+     * @param tokens список токенов
+     * @return множество переменных
+     */
     private Set<String> extractVariables(List<String> tokens) {
         Set<String> vars = new HashSet<>();
         for (String token : tokens) {
@@ -52,6 +78,10 @@ public class ExpressionEvaluator {
         return vars;
     }
 
+    /**
+     * Запрашивает у пользователя значения для переменных, которых ещё нет в Map.
+     * @param vars множество переменных
+     */
     private void requestVariables(Set<String> vars) {
         for (String var : vars) {
             if (!variables.containsKey(var)) {
@@ -62,6 +92,11 @@ public class ExpressionEvaluator {
         }
     }
 
+    /**
+     * Возвращает приоритет оператора.
+     * @param op оператор
+     * @return целое число, соответствующее приоритету
+     */
     private int precedence(String op) {
         switch (op) {
             case "^": return 4;
@@ -73,10 +108,21 @@ public class ExpressionEvaluator {
         }
     }
 
+    /**
+     * Проверяет, является ли оператор правоассоциативным.
+     * @param op оператор
+     * @return true, если оператор правоассоциативный
+     */
     private boolean isRightAssociative(String op) {
         return op.equals("^");
     }
 
+    /**
+     * Преобразует инфиксную запись (обычное выражение) в постфиксную (обратная польская нотация).
+     * Использует алгоритм сортировочной станции.
+     * @param tokens список токенов инфиксного выражения
+     * @return список токенов в постфиксной записи
+     */
     private List<String> toRPN(List<String> tokens) {
         List<String> output = new ArrayList<>();
         Stack<String> stack = new Stack<>();
@@ -115,13 +161,20 @@ public class ExpressionEvaluator {
 
         while (!stack.isEmpty()) {
             String top = stack.pop();
-            if ("()".contains(top)) throw new RuntimeException("Несоответствие скобок");
+            if (top.equals("(") || top.equals(")")) {
+                throw new RuntimeException("Несоответствие скобок");
+            }
             output.add(top);
         }
 
         return output;
     }
 
+    /**
+     * Вычисляет значение выражения, представленного в обратной польской нотации.
+     * @param rpn список токенов в RPN
+     * @return результат вычисления
+     */
     private double evaluateRPN(List<String> rpn) {
         Stack<Double> stack = new Stack<>();
 
@@ -156,6 +209,12 @@ public class ExpressionEvaluator {
         return stack.pop();
     }
 
+    /**
+     * Применяет математическую функцию к значению.
+     * @param func имя функции
+     * @param value значение аргумента
+     * @return результат применения функции
+     */
     private double applyFunction(String func, double value) {
         switch (func) {
             case "sin": return Math.sin(value);
